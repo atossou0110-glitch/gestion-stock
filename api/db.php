@@ -743,3 +743,171 @@ function ensure_quotes_table(PDO $pdo): void
 
     $done = true;
 }
+
+function ensure_equipment_table(PDO $pdo): void
+{
+    static $done = false;
+
+    if ($done) {
+        return;
+    }
+
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS equipment (
+          id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+          name VARCHAR(150) NOT NULL,
+          serial_number VARCHAR(100) NOT NULL,
+          category VARCHAR(80) NOT NULL DEFAULT 'Autre',
+          status VARCHAR(40) NOT NULL DEFAULT 'disponible',
+          assigned_to VARCHAR(120) NULL,
+          assigned_office VARCHAR(120) NULL,
+          purchase_date DATE NULL,
+          notes TEXT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          UNIQUE KEY uq_equipment_serial (serial_number),
+          INDEX idx_equipment_status (status),
+          INDEX idx_equipment_category (category)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS equipment_history (
+          id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+          event_type VARCHAR(40) NOT NULL,
+          equipment_id INT UNSIGNED NOT NULL,
+          equipment_name VARCHAR(150) NOT NULL,
+          serial_number VARCHAR(100) NOT NULL,
+          old_status VARCHAR(40) NULL,
+          new_status VARCHAR(40) NULL,
+          old_assigned_to VARCHAR(120) NULL,
+          new_assigned_to VARCHAR(120) NULL,
+          old_assigned_office VARCHAR(120) NULL,
+          new_assigned_office VARCHAR(120) NULL,
+          actor_id INT UNSIGNED NULL,
+          actor_name VARCHAR(120) NULL,
+          actor_role VARCHAR(40) NULL,
+          notes TEXT NULL,
+          event_date DATE NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          INDEX idx_equipment_history_event_type (event_type),
+          INDEX idx_equipment_history_equipment_id (equipment_id),
+          INDEX idx_equipment_history_event_date (event_date),
+          CONSTRAINT fk_equipment_history_equipment
+            FOREIGN KEY (equipment_id)
+            REFERENCES equipment(id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    $done = true;
+}
+
+function equipment_to_app(array $row): array
+{
+    return [
+        'id' => (int) $row['id'],
+        'name' => $row['name'],
+        'serialNumber' => $row['serial_number'],
+        'category' => $row['category'],
+        'status' => $row['status'],
+        'assignedTo' => $row['assigned_to'],
+        'assignedOffice' => $row['assigned_office'],
+        'purchaseDate' => $row['purchase_date'] ?? '',
+        'notes' => $row['notes'] ?? '',
+        'createdAt' => $row['created_at'] ?? '',
+    ];
+}
+
+function fetch_equipment(PDO $pdo): array
+{
+    ensure_equipment_table($pdo);
+
+    $stmt = $pdo->query(
+        "SELECT id, name, serial_number, category, status, assigned_to, assigned_office, 
+                DATE_FORMAT(purchase_date, '%Y-%m-%d') AS purchase_date, notes, created_at
+         FROM equipment
+         ORDER BY created_at DESC, id DESC"
+    );
+
+    return array_map('equipment_to_app', $stmt->fetchAll());
+}
+
+function log_equipment_history(PDO $pdo, array $event): void
+{
+    ensure_equipment_history_table($pdo);
+    $actor = current_user($pdo);
+
+    $stmt = $pdo->prepare(
+        'INSERT INTO equipment_history
+         (event_type, equipment_id, equipment_name, serial_number, 
+          old_status, new_status, old_assigned_to, new_assigned_to, 
+          old_assigned_office, new_assigned_office, 
+          actor_id, actor_name, actor_role, notes, event_date)
+         VALUES
+         (:event_type, :equipment_id, :equipment_name, :serial_number,
+          :old_status, :new_status, :old_assigned_to, :new_assigned_to,
+          :old_assigned_office, :new_assigned_office,
+          :actor_id, :actor_name, :actor_role, :notes, :event_date)'
+    );
+    $stmt->execute([
+        ':event_type' => (string) ($event['event_type'] ?? 'correction'),
+        ':equipment_id' => (int) ($event['equipment_id'] ?? 0),
+        ':equipment_name' => (string) ($event['equipment_name'] ?? ''),
+        ':serial_number' => (string) ($event['serial_number'] ?? ''),
+        ':old_status' => $event['old_status'] ?? null,
+        ':new_status' => $event['new_status'] ?? null,
+        ':old_assigned_to' => $event['old_assigned_to'] ?? null,
+        ':new_assigned_to' => $event['new_assigned_to'] ?? null,
+        ':old_assigned_office' => $event['old_assigned_office'] ?? null,
+        ':new_assigned_office' => $event['new_assigned_office'] ?? null,
+        ':actor_id' => isset($actor['id']) ? (int) $actor['id'] : null,
+        ':actor_name' => $actor['name'] ?? $actor['username'] ?? null,
+        ':actor_role' => $actor['role'] ?? null,
+        ':notes' => $event['notes'] ?? null,
+        ':event_date' => $event['event_date'] ?? date('Y-m-d'),
+    ]);
+}
+
+function fetch_equipment_history(PDO $pdo): array
+{
+    ensure_equipment_history_table($pdo);
+
+    $stmt = $pdo->query(
+        "SELECT id, event_type, equipment_id, equipment_name, serial_number,
+                old_status, new_status, old_assigned_to, new_assigned_to,
+                old_assigned_office, new_assigned_office,
+                actor_id, actor_name, actor_role, notes,
+                DATE_FORMAT(event_date, '%d/%m/%Y') AS date_fr,
+                DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS created_fr
+         FROM equipment_history
+         ORDER BY event_date DESC, id DESC
+         LIMIT 500"
+    );
+
+    return array_map('equipment_history_to_app', $stmt->fetchAll());
+}
+
+function equipment_history_to_app(array $row): array
+{
+    return [
+        'id' => (int) $row['id'],
+        'eventType' => $row['event_type'],
+        'equipmentId' => (int) $row['equipment_id'],
+        'equipmentName' => $row['equipment_name'],
+        'serialNumber' => $row['serial_number'],
+        'oldStatus' => $row['old_status'],
+        'newStatus' => $row['new_status'],
+        'oldAssignedTo' => $row['old_assigned_to'],
+        'newAssignedTo' => $row['new_assigned_to'],
+        'oldAssignedOffice' => $row['old_assigned_office'],
+        'newAssignedOffice' => $row['new_assigned_office'],
+        'actorName' => $row['actor_name'],
+        'notes' => $row['notes'],
+        'dateFr' => $row['date_fr'],
+        'createdAt' => $row['created_fr'],
+    ];
+}

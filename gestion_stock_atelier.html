@@ -49,6 +49,7 @@
     <p class="sidebar-label">Navigation</p>
     <button class="nav-item active" data-page="dashboard" onclick="showPage('dashboard', this)"><i class="fa-solid fa-gauge-high"></i> Tableau de bord</button>
     <button class="nav-item" data-page="stock" onclick="showPage('stock', this)"><i class="fa-solid fa-box"></i> Stock <span class="nav-badge" id="nb-alert" style="display:none"></span></button>
+    <button class="nav-item" data-page="equipements" onclick="showPage('equipements', this)"><i class="fa-solid fa-laptop"></i> Équipements</button>
     <button class="nav-item" data-page="sorties" onclick="showPage('sorties', this)"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sorties</button>
     <button class="nav-item" data-page="historique" onclick="showPage('historique', this)"><i class="fa-solid fa-clock-rotate-left"></i> Historique</button>
     <button class="nav-item" data-page="ajout" onclick="showPage('ajout', this)"><i class="fa-solid fa-plus"></i> Ajouter</button>
@@ -67,6 +68,7 @@
     <div class="mobile-nav" id="mobile-nav">
       <button class="nav-item active" data-page="dashboard" onclick="showPage('dashboard', this)"><i class="fa-solid fa-gauge-high"></i> Tableau de bord</button>
       <button class="nav-item" data-page="stock" onclick="showPage('stock', this)"><i class="fa-solid fa-box"></i> Stock</button>
+      <button class="nav-item" data-page="equipements" onclick="showPage('equipements', this)"><i class="fa-solid fa-laptop"></i> Équipements</button>
       <button class="nav-item" data-page="sorties" onclick="showPage('sorties', this)"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sorties</button>
       <button class="nav-item" data-page="historique" onclick="showPage('historique', this)"><i class="fa-solid fa-clock-rotate-left"></i> Historique</button>
       <button class="nav-item" data-page="ajout" onclick="showPage('ajout', this)"><i class="fa-solid fa-plus"></i> Ajouter</button>
@@ -222,6 +224,54 @@
             <th>Date</th><th>Type</th><th>Produit</th><th>Mouvement</th><th>Avant</th><th>Après</th><th>Service / projet</th><th>Personne</th><th>Utilisateur</th><th>Source</th><th>Notes</th>
           </tr></thead>
           <tbody id="history-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ─── ÉQUIPEMENTS ─── -->
+    <div id="p-equipements" class="page">
+      <div class="page-header">
+        <h1 class="page-title">Gestion des Équipements</h1>
+        <p class="page-sub">Inventaire des matériels durables avec suivi par numéro de série, état et affectation</p>
+      </div>
+
+      <div class="filters">
+        <input type="text" id="eq-search" placeholder="Rechercher un équipement..." oninput="renderEquipment()" style="max-width:250px;">
+        <select id="eq-status" onchange="renderEquipment()">
+          <option value="">Tous les états</option>
+          <option value="disponible">Disponible</option>
+          <option value="en-service">En service</option>
+          <option value="maintenance">En maintenance</option>
+          <option value="panne">En panne</option>
+          <option value="reforme">Réformé</option>
+        </select>
+        <select id="eq-category" onchange="renderEquipment()">
+          <option value="">Toutes catégories</option>
+          <option value="Outillage">Outillage</option>
+          <option value="Électronique">Électronique</option>
+          <option value="Bureau">Bureau</option>
+          <option value="Sécurité">Sécurité</option>
+          <option value="Autre">Autre</option>
+        </select>
+        <button class="btn btn-primary" onclick="openAddEquipmentModal()"><i class="fa-solid fa-plus"></i> Nouvel équipement</button>
+      </div>
+
+      <div class="card table-wrap">
+        <table>
+          <thead><tr>
+            <th>Nom</th><th>N° Série</th><th>Catégorie</th><th>État</th><th>Affecté à</th><th>Bureau</th><th>Date achat</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="equipment-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="section-title" style="margin-top:1.5rem;">Historique des équipements</div>
+      <div class="card table-wrap" style="margin-top:1rem;">
+        <table>
+          <thead><tr>
+            <th>Date</th><th>Type</th><th>Équipement</th><th>N° Série</th><th>Détails</th><th>Acteur</th><th>Notes</th>
+          </tr></thead>
+          <tbody id="equipment-history-tbody"></tbody>
         </table>
       </div>
     </div>
@@ -639,6 +689,67 @@
     <div class="modal-confirm-actions">
       <button class="btn" onclick="closeParamsConfirmModal()"><i class="fa-solid fa-xmark"></i> Annuler</button>
       <button class="btn btn-primary" onclick="confirmSaveParams()"><i class="fa-solid fa-check"></i> Confirmer et enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale d'ajout/modification d'équipement -->
+<div class="modal-overlay" id="equipment-modal">
+  <div class="modal-form">
+    <h3 id="equipment-modal-title"><i class="fa-solid fa-laptop" style="margin-right:8px;"></i>Équipement</h3>
+    <input type="hidden" id="eq-id">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nom *</label><input type="text" id="eq-name" placeholder="Ex: Viseuse à bois"></div>
+      <div class="form-group"><label class="form-label">N° Série *</label><input type="text" id="eq-serial" placeholder="Ex: VB-2025-001"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Catégorie</label>
+        <select id="eq-cat">
+          <option value="Outillage">Outillage</option>
+          <option value="Électronique">Électronique</option>
+          <option value="Bureau">Bureau</option>
+          <option value="Sécurité">Sécurité</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">État</label>
+        <select id="eq-st">
+          <option value="disponible">Disponible</option>
+          <option value="en-service">En service</option>
+          <option value="maintenance">En maintenance</option>
+          <option value="panne">En panne</option>
+          <option value="reforme">Réformé</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Affecté à</label><input type="text" id="eq-assigned" placeholder="Nom de la personne"></div>
+      <div class="form-group"><label class="form-label">Bureau</label><input type="text" id="eq-office" placeholder="Ex: Atelier A1"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Date d'achat</label><input type="date" id="eq-purchase"></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea id="eq-notes" rows="3" placeholder="Informations complémentaires..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeEquipmentModal()"><i class="fa-solid fa-xmark"></i> Annuler</button>
+      <button class="btn btn-primary" onclick="saveEquipment()"><i class="fa-solid fa-check"></i> Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale de confirmation pour équipement -->
+<div class="modal-overlay" id="equipment-confirm-modal">
+  <div class="modal-confirm">
+    <h3><i class="fa-solid fa-circle-check" style="margin-right:8px;color:var(--green);"></i>Vérifier l'équipement</h3>
+    <div class="modal-confirm-summary">
+      <p><strong>Nom :</strong> <span id="confirm-eq-name"></span></p>
+      <p><strong>N° Série :</strong> <span id="confirm-eq-serial"></span></p>
+      <p><strong>Catégorie :</strong> <span id="confirm-eq-category"></span></p>
+      <p><strong>État :</strong> <span id="confirm-eq-status"></span></p>
+      <p><strong>Affecté à :</strong> <span id="confirm-eq-assigned"></span></p>
+      <p><strong>Bureau :</strong> <span id="confirm-eq-office"></span></p>
+    </div>
+    <div class="modal-confirm-actions">
+      <button class="btn" onclick="closeEquipmentConfirmModal()"><i class="fa-solid fa-xmark"></i> Annuler</button>
+      <button class="btn btn-primary" onclick="confirmSaveEquipment()"><i class="fa-solid fa-check"></i> Confirmer et enregistrer</button>
     </div>
   </div>
 </div>
