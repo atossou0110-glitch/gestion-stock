@@ -2642,7 +2642,7 @@ function showOrderConfirmModal(data) {
   document.getElementById('confirm-date').textContent = data.date;
   document.getElementById('confirm-delay').textContent = data.delay;
   document.getElementById('confirm-count').textContent = data.bulk_orders.length;
-  document.getElementById('confirm-total').textContent = totalCost.toFixed(2) + ' €';
+  document.getElementById('confirm-total').textContent = totalCost.toLocaleString() + ' FCFA';
   
   const tbody = document.getElementById('confirm-items-body');
   tbody.innerHTML = '';
@@ -2652,8 +2652,8 @@ function showOrderConfirmModal(data) {
     tr.innerHTML = `
       <td>${item.name}</td>
       <td>${formatQuantity(item.qty, item.unit)} ${item.unit}</td>
-      <td>${item.unitCost.toFixed(2)} €</td>
-      <td style="font-weight:600;">${item.cost.toFixed(2)} €</td>
+      <td>${item.unitCost.toLocaleString()} FCFA</td>
+      <td style="font-weight:600;">${item.cost.toLocaleString()} FCFA</td>
     `;
     tbody.appendChild(tr);
   }
@@ -2714,6 +2714,10 @@ function showMovementConfirmModal(data) {
     tbody.appendChild(tr);
   }
   
+  if (tbody.children.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Aucun article</td></tr>';
+  }
+  
   modal.classList.add('active');
 }
 
@@ -2756,13 +2760,15 @@ function showQuoteConfirmModal(data) {
   document.getElementById('confirm-quote-project').textContent = data.project;
   document.getElementById('confirm-quote-client').textContent = data.client || 'N/A';
   document.getElementById('confirm-quote-pieces').textContent = Object.keys(data.pieces).length;
-  document.getElementById('confirm-quote-total').textContent = data.total.toFixed(2) + ' €';
+  document.getElementById('confirm-quote-total').textContent = data.total.toLocaleString() + ' FCFA';
   
   const tbody = document.getElementById('confirm-quote-items-body');
   tbody.innerHTML = '';
   
+  let hasItems = false;
   for (const [cat, details] of Object.entries(data.pieces)) {
     for (const [matName, qty] of Object.entries(details.materials)) {
+      hasItems = true;
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${cat} - ${matName}</td>
@@ -2770,6 +2776,10 @@ function showQuoteConfirmModal(data) {
       `;
       tbody.appendChild(tr);
     }
+  }
+  
+  if (!hasItems) {
+    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Aucun matériau</td></tr>';
   }
   
   modal.classList.add('active');

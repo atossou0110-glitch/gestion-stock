@@ -1,45 +1,22 @@
-```gitignore
+# Examples 1:
+(empty — output nothing)
+
+# Example 2 (Project with artifacts):
 # Compiled and build artifacts
 *.pyc
 __pycache__/
 *.o
 *.obj
-*.class
-*.exe
-*.dll
-*.so
-*.a
-*.out
-
-# Dependencies
-node_modules/
-venv/
-.venv/
-.env
-.env.local
-.env.*
-
-# Build directories
 dist/
 build/
 target/
-.gradle/
 
-# Python specific
-*.pyc
-__pycache__/
-*.pyo
-*.pyd
-.Python
-*.so
-.Python
-env/
-venv/
-ENV/
+# Dependencies
 .venv/
-.env/
-.venv.bak/
-venv.bak/
+venv/
+node_modules/
+.julia/
+.zig-cache/
 
 # Logs and temp files
 *.log
@@ -47,60 +24,25 @@ venv.bak/
 *.swp
 *.swo
 
-# OS generated files
-.DS_Store
-Thumbs.db
-.DS_Store?
-ehthumbs.db
-Icon?
-Network Trash Folder
-Temporary Items
-.Trashes
-*.nib
-*~
-.DS_Store
-.Spotlight-V100
-.Trashes
-.VolumeIcon.icns
+# Environment
+.env
+.env.local
+.env.*
 
-# Editor specific
+# Editors
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# System files
+.DS_Store
+Thumbs.db
 
 # Coverage
 coverage/
 htmlcov/
 .coverage
 
-# MyPy
-.mypy_cache/
-
-# Pytest
-.pytest_cache/
-
-# Compressed files
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
-```
+# Original rules preserved
+*.log
