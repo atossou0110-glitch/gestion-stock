@@ -1901,32 +1901,9 @@ async function saveQuote() {
     return;
   }
 
-  try {
-    const response = await apiRequest('quotes.php', {
-      method: 'POST',
-      body: JSON.stringify({
-        project: lastProjectQuote.project,
-        client: lastProjectQuote.client,
-        pieces: lastProjectQuote.pieces,
-        total: lastProjectQuote.total,
-        quoteData: JSON.stringify(lastProjectQuote),
-        quoteHash: lastProjectQuote.quoteHash
-      })
-    });
-    lastProjectQuote.isSaved = true;
-    lastProjectQuote.id = response.quoteId;
-    toast('Devis enregistré avec succès.');
-    await loadQuotesHistory();
-  } catch (error) {
-    if (error.status === 409) {
-      toast('Ce devis est déjà enregistré.');
-      lastProjectQuote.isSaved = true;
-      lastProjectQuote.id = error.data?.quoteId || lastProjectQuote.id;
-    } else {
-      console.error('Erreur lors de la sauvegarde du devis:', error);
-      toast('Erreur lors de la sauvegarde du devis.');
-    }
-  }
+  // Stocker les données et afficher la modale de confirmation
+  pendingQuoteData = lastProjectQuote;
+  showQuoteConfirmModal(pendingQuoteData);
 }
 
 async function loadQuotesHistory() {
@@ -2315,26 +2292,9 @@ async function saveBulkMovements() {
     return;
   }
 
-  try {
-    const response = await apiRequest('movements.php', {
-      method: 'POST',
-      body: JSON.stringify({
-        bulk_movements,
-        destination,
-        requester,
-        date: dateVal || todayInputValue()
-      })
-    });
-    
-    toast(`${bulk_movements.length} sortie(s) enregistrée(s) avec succès!`);
-    clearMovementForm();
-    await loadData();
-    renderMovements();
-  } catch (error) {
-    console.error('Erreur lors de l\'enregistrement des sorties:', error);
-    const errorMsg = error?.message || 'Erreur inconnue';
-    toast(`Erreur: ${errorMsg}`);
-  }
+  // Stocker les données et afficher la modale de confirmation
+  pendingMovementData = { bulk_movements, destination, requester, date: dateVal || todayInputValue() };
+  showMovementConfirmModal(pendingMovementData);
 }
 
 async function deleteMovement(id) {
@@ -2608,6 +2568,10 @@ function fillOrderUnitCost(select, overwrite = true) {
 
 // Variables globales pour la modale de confirmation
 let pendingOrderData = null;
+let pendingMovementData = null;
+let pendingQuoteData = null;
+let pendingSupplierData = null;
+let pendingParamsData = null;
 
 async function saveBulkOrders() {
   const supplier = document.getElementById('o-supplier')?.value.trim();
@@ -2726,6 +2690,224 @@ async function confirmSaveOrder() {
   }
 }
 
+// Afficher la modale de confirmation pour les mouvements
+function showMovementConfirmModal(data) {
+  const modal = document.getElementById('movement-confirm-modal');
+  const totalItems = data.bulk_movements.length;
+  
+  document.getElementById('confirm-movement-destination').textContent = data.destination;
+  document.getElementById('confirm-movement-requester').textContent = data.requester;
+  document.getElementById('confirm-movement-date').textContent = data.date;
+  document.getElementById('confirm-movement-count').textContent = totalItems;
+  
+  const tbody = document.getElementById('confirm-movement-items-body');
+  tbody.innerHTML = '';
+  
+  for (const item of data.bulk_movements) {
+    const fullItem = items.find(i => i.id === item.itemId);
+    if (!fullItem) continue;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${fullItem.name}</td>
+      <td>${formatQuantity(item.qty, fullItem.unit)} ${fullItem.unit}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+  
+  modal.classList.add('active');
+}
+
+// Fermer la modale de mouvements
+function closeMovementConfirmModal() {
+  const modal = document.getElementById('movement-confirm-modal');
+  modal.classList.remove('active');
+  pendingMovementData = null;
+}
+
+// Confirmer et enregistrer les mouvements
+async function confirmSaveMovement() {
+  if (!pendingMovementData) {
+    toast('Aucune donnée de mouvement à enregistrer.');
+    return;
+  }
+  
+  try {
+    await apiRequest('movements.php', {
+      method: 'POST',
+      body: JSON.stringify(pendingMovementData)
+    });
+    
+    toast(`${pendingMovementData.bulk_movements.length} sortie(s) enregistrée(s) avec succès!`);
+    clearMovementForm();
+    closeMovementConfirmModal();
+    await loadData();
+    renderMovements();
+  } catch (error) {
+    console.error('Erreur lors de l\'enregistrement des sorties:', error);
+    const errorMsg = error?.message || 'Erreur inconnue';
+    toast(`Erreur: ${errorMsg}`);
+  }
+}
+
+// Afficher la modale de confirmation pour les devis
+function showQuoteConfirmModal(data) {
+  const modal = document.getElementById('quote-confirm-modal');
+  
+  document.getElementById('confirm-quote-project').textContent = data.project;
+  document.getElementById('confirm-quote-client').textContent = data.client || 'N/A';
+  document.getElementById('confirm-quote-pieces').textContent = Object.keys(data.pieces).length;
+  document.getElementById('confirm-quote-total').textContent = data.total.toFixed(2) + ' €';
+  
+  const tbody = document.getElementById('confirm-quote-items-body');
+  tbody.innerHTML = '';
+  
+  for (const [cat, details] of Object.entries(data.pieces)) {
+    for (const [matName, qty] of Object.entries(details.materials)) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${cat} - ${matName}</td>
+        <td>${formatQuantity(qty, UNITS_BESOIN[cat])} ${UNITS_BESOIN[cat]}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+  
+  modal.classList.add('active');
+}
+
+// Fermer la modale de devis
+function closeQuoteConfirmModal() {
+  const modal = document.getElementById('quote-confirm-modal');
+  modal.classList.remove('active');
+  pendingQuoteData = null;
+}
+
+// Confirmer et enregistrer le devis
+async function confirmSaveQuote() {
+  if (!pendingQuoteData) {
+    toast('Aucun devis à enregistrer.');
+    return;
+  }
+  
+  try {
+    const response = await apiRequest('quotes.php', {
+      method: 'POST',
+      body: JSON.stringify({
+        project: pendingQuoteData.project,
+        client: pendingQuoteData.client,
+        pieces: pendingQuoteData.pieces,
+        total: pendingQuoteData.total,
+        quoteData: JSON.stringify(pendingQuoteData),
+        quoteHash: pendingQuoteData.quoteHash
+      })
+    });
+    pendingQuoteData.isSaved = true;
+    pendingQuoteData.id = response.quoteId;
+    lastProjectQuote = pendingQuoteData;
+    toast('Devis enregistré avec succès.');
+    closeQuoteConfirmModal();
+    await loadQuotesHistory();
+  } catch (error) {
+    if (error.status === 409) {
+      toast('Ce devis est déjà enregistré.');
+      pendingQuoteData.isSaved = true;
+      pendingQuoteData.id = error.data?.quoteId || pendingQuoteData.id;
+      lastProjectQuote = pendingQuoteData;
+      closeQuoteConfirmModal();
+    } else {
+      console.error('Erreur lors de la sauvegarde du devis:', error);
+      toast('Erreur lors de la sauvegarde du devis.');
+    }
+  }
+}
+
+// Afficher la modale de confirmation pour les fournisseurs
+function showSupplierConfirmModal(data) {
+  const modal = document.getElementById('supplier-confirm-modal');
+  const isUpdate = editingSupplierId !== null;
+  
+  document.getElementById('confirm-supplier-name').textContent = data.name;
+  document.getElementById('confirm-supplier-contact').textContent = data.contact || 'N/A';
+  document.getElementById('confirm-supplier-phone').textContent = data.phone || 'N/A';
+  document.getElementById('confirm-supplier-email').textContent = data.email || 'N/A';
+  document.getElementById('confirm-supplier-address').textContent = data.address || 'N/A';
+  document.getElementById('confirm-supplier-delay').textContent = data.leadTime + ' jours';
+  document.getElementById('confirm-supplier-products').textContent = data.products || 'N/A';
+  document.getElementById('confirm-supplier-action').textContent = isUpdate ? 'Mettre à jour' : 'Créer';
+  
+  modal.classList.add('active');
+}
+
+// Fermer la modale de fournisseurs
+function closeSupplierConfirmModal() {
+  const modal = document.getElementById('supplier-confirm-modal');
+  modal.classList.remove('active');
+  pendingSupplierData = null;
+}
+
+// Confirmer et enregistrer le fournisseur
+async function confirmSaveSupplier() {
+  if (!pendingSupplierData) {
+    toast('Aucune donnée de fournisseur à enregistrer.');
+    return;
+  }
+  
+  try {
+    const data = await apiRequest('suppliers.php', {
+      method: editingSupplierId ? 'PUT' : 'POST',
+      body: JSON.stringify(pendingSupplierData)
+    });
+
+    suppliers = data.suppliers || suppliers;
+    clearSupplierForm();
+    closeSupplierConfirmModal();
+    renderSuppliers();
+    toast('Fournisseur sauvegardé.');
+  } catch (error) {
+    console.error(error);
+    toast(error.message || 'Sauvegarde fournisseur impossible.');
+  }
+}
+
+// Afficher la modale de confirmation pour les paramètres
+function showParamsConfirmModal(data) {
+  const modal = document.getElementById('params-confirm-modal');
+  
+  document.getElementById('confirm-params-atelier').textContent = data.atelier;
+  document.getElementById('confirm-params-devise').textContent = data.devise;
+  
+  modal.classList.add('active');
+}
+
+// Fermer la modale de paramètres
+function closeParamsConfirmModal() {
+  const modal = document.getElementById('params-confirm-modal');
+  modal.classList.remove('active');
+  pendingParamsData = null;
+}
+
+// Confirmer et enregistrer les paramètres
+async function confirmSaveParams() {
+  if (!pendingParamsData) {
+    toast('Aucune donnée de paramètre à enregistrer.');
+    return;
+  }
+  
+  try {
+    const data = await apiRequest('settings.php', {
+      method: 'PUT',
+      body: JSON.stringify(pendingParamsData)
+    });
+
+    params = data.params || params;
+    syncParamsForm();
+    closeParamsConfirmModal();
+    toast('Paramètres sauvegardés.');
+  } catch (error) {
+    showDbError(error);
+  }
+}
+
 async function receiveOrder(oid) {
   try {
     await apiRequest('orders.php', {
@@ -2811,20 +2993,9 @@ async function saveSupplier() {
     return;
   }
 
-  try {
-    const data = await apiRequest('suppliers.php', {
-      method: editingSupplierId ? 'PUT' : 'POST',
-      body: JSON.stringify(payload)
-    });
-
-    suppliers = data.suppliers || suppliers;
-    clearSupplierForm();
-    renderSuppliers();
-    toast('Fournisseur sauvegardé.');
-  } catch (error) {
-    console.error(error);
-    toast(error.message || 'Sauvegarde fournisseur impossible.');
-  }
+  // Stocker les données et afficher la modale de confirmation
+  pendingSupplierData = payload;
+  showSupplierConfirmModal(pendingSupplierData);
 }
 
 function editSupplier(id) {
@@ -2872,18 +3043,9 @@ async function saveParams() {
   params.atelier = document.getElementById('p-atelier').value || 'Mon Atelier';
   params.devise = document.getElementById('p-devise').value;
 
-  try {
-    const data = await apiRequest('settings.php', {
-      method: 'PUT',
-      body: JSON.stringify(params)
-    });
-
-    params = data.params || params;
-    syncParamsForm();
-    toast('Paramètres sauvegardés.');
-  } catch (error) {
-    showDbError(error);
-  }
+  // Stocker les données et afficher la modale de confirmation
+  pendingParamsData = { ...params };
+  showParamsConfirmModal(pendingParamsData);
 }
 
 async function resetData() {

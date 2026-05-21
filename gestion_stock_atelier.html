@@ -555,6 +555,94 @@
   </div>
 </div>
 
+<!-- Modale de confirmation pour les mouvements -->
+<div class="modal-overlay" id="movement-confirm-modal">
+  <div class="modal-confirm">
+    <h3><i class="fa-solid fa-circle-check" style="margin-right:8px;color:var(--green);"></i>Vérifier les sorties</h3>
+    <div class="modal-confirm-summary">
+      <p><strong>Destination :</strong> <span id="confirm-movement-destination"></span></p>
+      <p><strong>Demandeur :</strong> <span id="confirm-movement-requester"></span></p>
+      <p><strong>Date :</strong> <span id="confirm-movement-date"></span></p>
+      <p><strong>Nombre d'articles :</strong> <span id="confirm-movement-count"></span></p>
+    </div>
+    <table class="modal-confirm-table">
+      <thead>
+        <tr>
+          <th>Matériau</th>
+          <th>Quantité</th>
+        </tr>
+      </thead>
+      <tbody id="confirm-movement-items-body"></tbody>
+    </table>
+    <div class="modal-confirm-actions">
+      <button class="btn" onclick="closeMovementConfirmModal()"><i class="fa-solid fa-xmark"></i> Annuler</button>
+      <button class="btn btn-primary" onclick="confirmSaveMovement()"><i class="fa-solid fa-check"></i> Confirmer et enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale de confirmation pour les devis -->
+<div class="modal-overlay" id="quote-confirm-modal">
+  <div class="modal-confirm">
+    <h3><i class="fa-solid fa-circle-check" style="margin-right:8px;color:var(--green);"></i>Vérifier le devis</h3>
+    <div class="modal-confirm-summary">
+      <p><strong>Projet :</strong> <span id="confirm-quote-project"></span></p>
+      <p><strong>Client :</strong> <span id="confirm-quote-client"></span></p>
+      <p><strong>Nombre de pièces :</strong> <span id="confirm-quote-pieces"></span></p>
+      <p><strong>Coût total estimé :</strong> <span id="confirm-quote-total" style="color:var(--blue);font-weight:700;"></span></p>
+    </div>
+    <table class="modal-confirm-table">
+      <thead>
+        <tr>
+          <th>Élément</th>
+          <th>Quantité</th>
+        </tr>
+      </thead>
+      <tbody id="confirm-quote-items-body"></tbody>
+    </table>
+    <div class="modal-confirm-actions">
+      <button class="btn" onclick="closeQuoteConfirmModal()"><i class="fa-solid fa-xmark"></i> Annuler</button>
+      <button class="btn btn-primary" onclick="confirmSaveQuote()"><i class="fa-solid fa-check"></i> Confirmer et enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale de confirmation pour les fournisseurs -->
+<div class="modal-overlay" id="supplier-confirm-modal">
+  <div class="modal-confirm">
+    <h3><i class="fa-solid fa-circle-check" style="margin-right:8px;color:var(--green);"></i>Vérifier le fournisseur</h3>
+    <div class="modal-confirm-summary">
+      <p><strong>Action :</strong> <span id="confirm-supplier-action"></span></p>
+      <p><strong>Nom :</strong> <span id="confirm-supplier-name"></span></p>
+      <p><strong>Contact :</strong> <span id="confirm-supplier-contact"></span></p>
+      <p><strong>Téléphone :</strong> <span id="confirm-supplier-phone"></span></p>
+      <p><strong>Email :</strong> <span id="confirm-supplier-email"></span></p>
+      <p><strong>Adresse :</strong> <span id="confirm-supplier-address"></span></p>
+      <p><strong>Délai :</strong> <span id="confirm-supplier-delay"></span></p>
+      <p><strong>Produits :</strong> <span id="confirm-supplier-products"></span></p>
+    </div>
+    <div class="modal-confirm-actions">
+      <button class="btn" onclick="closeSupplierConfirmModal()"><i class="fa-solid fa-xmark"></i> Annuler</button>
+      <button class="btn btn-primary" onclick="confirmSaveSupplier()"><i class="fa-solid fa-check"></i> Confirmer et enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale de confirmation pour les paramètres -->
+<div class="modal-overlay" id="params-confirm-modal">
+  <div class="modal-confirm">
+    <h3><i class="fa-solid fa-circle-check" style="margin-right:8px;color:var(--green);"></i>Vérifier les paramètres</h3>
+    <div class="modal-confirm-summary">
+      <p><strong>Nom de l'atelier :</strong> <span id="confirm-params-atelier"></span></p>
+      <p><strong>Devise :</strong> <span id="confirm-params-devise"></span></p>
+    </div>
+    <div class="modal-confirm-actions">
+      <button class="btn" onclick="closeParamsConfirmModal()"><i class="fa-solid fa-xmark"></i> Annuler</button>
+      <button class="btn btn-primary" onclick="confirmSaveParams()"><i class="fa-solid fa-check"></i> Confirmer et enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>
