@@ -6,12 +6,28 @@ const DB_NAME = 'gestion_stock_atelier';
 const DB_USER = 'root';
 const DB_PASS = '';
 
-header('Access-Control-Allow-Origin: *');
+$allowed_origin = 'http://localhost';
+if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], ['http://localhost', 'http://127.0.0.1'], true)) {
+    $allowed_origin = $_SERVER['HTTP_ORIGIN'];
+}
+
+header('Access-Control-Allow-Origin: ' . $allowed_origin);
 header('Access-Control-Allow-Headers: Content-Type');
 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
 header('Access-Control-Allow-Credentials: true');
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path' => $params['path'],
+            'domain' => '',
+            'secure' => false,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+    }
     session_start();
 }
 
