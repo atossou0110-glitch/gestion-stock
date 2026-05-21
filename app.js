@@ -3152,6 +3152,7 @@ function renderAll() {
   renderEntries();
   renderMovements();
   renderHistory();
+  renderEquipment();
   renderSuppliers();
   renderOrders();
   renderQuoteBuilder();
