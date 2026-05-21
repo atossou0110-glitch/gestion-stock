@@ -2606,6 +2606,9 @@ function fillOrderUnitCost(select, overwrite = true) {
   }
 }
 
+// Variables globales pour la modale de confirmation
+let pendingOrderData = null;
+
 async function saveBulkOrders() {
   const supplier = document.getElementById('o-supplier')?.value.trim();
   const delayRaw = document.getElementById('o-delay')?.value;
@@ -2653,7 +2656,7 @@ async function saveBulkOrders() {
       return;
     }
 
-    bulk_orders.push({ itemId: item.id, qty, cost: +(qty * unitCost).toFixed(2), unitCost });
+    bulk_orders.push({ itemId: item.id, qty, cost: +(qty * unitCost).toFixed(2), unitCost, name: item.name, unit: item.unit });
   }
 
   if (!bulk_orders.length) {
@@ -2661,15 +2664,63 @@ async function saveBulkOrders() {
     return;
   }
 
+  // Stocker les données et afficher la modale de confirmation
+  pendingOrderData = { bulk_orders, supplier, delay, date, notes: '' };
+  showOrderConfirmModal(pendingOrderData);
+}
+
+// Afficher la modale de confirmation
+function showOrderConfirmModal(data) {
+  const modal = document.getElementById('order-confirm-modal');
+  const totalCost = data.bulk_orders.reduce((sum, item) => sum + item.cost, 0);
+  
+  document.getElementById('confirm-supplier').textContent = data.supplier;
+  document.getElementById('confirm-date').textContent = data.date;
+  document.getElementById('confirm-delay').textContent = data.delay;
+  document.getElementById('confirm-count').textContent = data.bulk_orders.length;
+  document.getElementById('confirm-total').textContent = totalCost.toFixed(2) + ' €';
+  
+  const tbody = document.getElementById('confirm-items-body');
+  tbody.innerHTML = '';
+  
+  for (const item of data.bulk_orders) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.name}</td>
+      <td>${formatQuantity(item.qty, item.unit)} ${item.unit}</td>
+      <td>${item.unitCost.toFixed(2)} €</td>
+      <td style="font-weight:600;">${item.cost.toFixed(2)} €</td>
+    `;
+    tbody.appendChild(tr);
+  }
+  
+  modal.classList.add('active');
+}
+
+// Fermer la modale
+function closeOrderConfirmModal() {
+  const modal = document.getElementById('order-confirm-modal');
+  modal.classList.remove('active');
+  pendingOrderData = null;
+}
+
+// Confirmer et enregistrer la commande
+async function confirmSaveOrder() {
+  if (!pendingOrderData) {
+    toast('Aucune donnée de commande à enregistrer.');
+    return;
+  }
+  
   try {
     await apiRequest('orders.php', {
       method: 'POST',
-      body: JSON.stringify({ bulk_orders, supplier, delay, date, notes: '' })
+      body: JSON.stringify(pendingOrderData)
     });
 
     clearOrderForm();
+    closeOrderConfirmModal();
     await refreshData();
-    toast(`${bulk_orders.length} article(s) commandé(s).`);
+    toast(`${pendingOrderData.bulk_orders.length} article(s) commandé(s).`);
   } catch (error) {
     showDbError(error);
   }

@@ -526,6 +526,35 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Modale de confirmation pour les commandes -->
+<div class="modal-overlay" id="order-confirm-modal">
+  <div class="modal-confirm">
+    <h3><i class="fa-solid fa-circle-check" style="margin-right:8px;color:var(--green);"></i>Vérifier la commande</h3>
+    <div class="modal-confirm-summary">
+      <p><strong>Fournisseur :</strong> <span id="confirm-supplier"></span></p>
+      <p><strong>Date de commande :</strong> <span id="confirm-date"></span></p>
+      <p><strong>Délai estimé :</strong> <span id="confirm-delay"></span> jours</p>
+      <p><strong>Nombre d'articles :</strong> <span id="confirm-count"></span></p>
+      <p><strong>Coût total estimé :</strong> <span id="confirm-total" style="color:var(--blue);font-weight:700;"></span></p>
+    </div>
+    <table class="modal-confirm-table">
+      <thead>
+        <tr>
+          <th>Matériau</th>
+          <th>Quantité</th>
+          <th>Coût unitaire</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="confirm-items-body"></tbody>
+    </table>
+    <div class="modal-confirm-actions">
+      <button class="btn" onclick="closeOrderConfirmModal()"><i class="fa-solid fa-xmark"></i> Annuler</button>
+      <button class="btn btn-primary" onclick="confirmSaveOrder()"><i class="fa-solid fa-check"></i> Confirmer et enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>
