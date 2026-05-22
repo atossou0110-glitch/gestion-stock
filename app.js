@@ -818,6 +818,35 @@ function renderStock() {
   }).join('');
 }
 
+function showEquipmentTab(tabName, button) {
+  // Masquer tous les onglets de contenu
+  document.querySelectorAll('.equipment-tab-content').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Enlever active de tous les boutons
+  document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Afficher le nouvel onglet
+  const tabId = `equipment-tab-${tabName}`;
+  const tabElement = document.getElementById(tabId);
+  if (tabElement) {
+    tabElement.classList.add('active');
+  }
+  
+  // Ajouter active au bouton cliqué
+  if (button) {
+    button.classList.add('active');
+  }
+  
+  // Réinitialiser le formulaire quand on passe à l'onglet Ajouter
+  if (tabName === 'ajoute') {
+    resetEquipmentForm();
+  }
+}
+
 function equipmentStatusBadge(status) {
   if (status === 'disponible') return '<span class="badge badge-ok">Disponible</span>';
   if (status === 'en_utilisation') return '<span class="badge badge-warn">En utilisation</span>';

@@ -137,8 +137,18 @@
         <h1 class="page-title">Matériels durables</h1>
         <p class="page-sub">Inventaire d’équipements avec suivi par numéro de série, état, bureau, personne et historique.</p>
       </div>
+      <!-- Sous-onglets Équipements -->
+      <div class="sub-tabs" style="margin-bottom: 1.5rem;">
+        <button class="sub-tab-btn active" onclick="showEquipmentTab('liste', this)">
+          <i class="fa-solid fa-list"></i> Liste
+        </button>
+        <button class="sub-tab-btn" onclick="showEquipmentTab('ajoute', this)">
+          <i class="fa-solid fa-plus"></i> Ajouter
+        </button>
+      </div>
 
-      <div class="filters">
+      <!-- Onglet Liste -->
+      <div id="equipment-tab-liste" class="equipment-tab-content active">      <div class="filters">
         <input type="text" id="e-search" placeholder="Rechercher nom, n° de série, personne..." oninput="renderEquipements()" style="max-width:260px;">
         <select id="e-filter-status" onchange="renderEquipements()">
           <option value="">Tous états</option>
@@ -152,6 +162,7 @@
         </select>
         <span style="font-size:12px;color:var(--text2);" id="e-count"></span>
       </div>
+      </div>
 
       <div class="card table-wrap">
         <table>
@@ -162,6 +173,9 @@
         </table>
       </div>
 
+      <!-- Onglet Ajouter -->
+      <div id="equipment-tab-ajoute" class="equipment-tab-content">
+      <div class="card
       <div class="card" style="margin-top:1.5rem;">
         <div class="form-grid">
           <input type="hidden" id="e-id">
@@ -183,6 +197,7 @@
         </div>
         <div class="btn-row">
           <button class="btn btn-primary" onclick="saveEquipment()"><i class="fa-solid fa-check"></i> Enregistrer</button>
+      </div>
           <button class="btn" onclick="resetEquipmentForm()"><i class="fa-solid fa-rotate-left"></i> Effacer</button>
           <button class="btn btn-danger" id="delete-equipment-btn" style="display:none" onclick="deleteEquipment()"><i class="fa-solid fa-trash"></i> Supprimer</button>
         </div>

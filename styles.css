@@ -656,6 +656,46 @@
   }
   .toast.show { opacity: 1; transform: translateY(0); }
 
+  /* ── Sub-tabs (Onglets internes) ── */
+  .sub-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0.75rem 0;
+    flex-wrap: wrap;
+  }
+  .sub-tab-btn {
+    padding: 8px 14px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 0;
+    font-family: inherit;
+  }
+  .sub-tab-btn:hover {
+    color: var(--text);
+    background: var(--bg);
+  }
+  .sub-tab-btn.active {
+    color: var(--blue);
+    border-bottom-color: var(--blue);
+  }
+  .equipment-tab-content {
+    display: none;
+  }
+  .equipment-tab-content.active {
+    display: block;
+  }
+
   /* ── Responsive ── */
   .mobile-nav {
     display: none;
