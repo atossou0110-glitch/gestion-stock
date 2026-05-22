@@ -1,28 +1,17 @@
-# Examples 1:
-(empty — output nothing)
-
-# Example 2 (Project with artifacts):
+```php
 # Compiled and build artifacts
-*.pyc
-__pycache__/
 *.o
 *.obj
-dist/
-build/
-target/
+*.out
 
 # Dependencies
-.venv/
-venv/
-node_modules/
-.julia/
-.zig-cache/
+vendor/
+composer.lock
 
 # Logs and temp files
 *.log
 *.tmp
 *.swp
-*.swo
 
 # Environment
 .env
@@ -32,17 +21,15 @@ node_modules/
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
+*.sublime-project
+*.sublime-workspace
 
-# System files
+# OS generated files
 .DS_Store
 Thumbs.db
 
-# Coverage
+# PHP specific
+*.php~
+phpunit.xml.dist
 coverage/
-htmlcov/
-.coverage
-
-# Original rules preserved
-*.log
+```
