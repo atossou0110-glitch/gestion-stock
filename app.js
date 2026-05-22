@@ -994,6 +994,7 @@ function renderEquipment() {
     <td data-label="État"><span class="badge ${eq.status === 'en service' ? 'status-ok' : eq.status === 'en panne' ? 'status-alert' : 'status-warn'}">${escapeHtml(eq.status)}</span></td>
     <td data-label="Affecté à">${escapeHtml(eq.assigned||'—')}</td>
     <td data-label="Bureau">${escapeHtml(eq.office||'—')}</td>
+    <td data-label="Date achat">${eq.purchaseDate ? new Date(eq.purchaseDate).toLocaleDateString('fr-FR') : '—'}</td>
     <td data-label="Actions">
       <div style="display:flex;gap:4px;">
         <button class="btn btn-sm btn-icon" title="Modifier" onclick="editEquipment(${eq.id})"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -1001,6 +1002,167 @@ function renderEquipment() {
       </div>
     </td>
   </tr>`).join('');
+}
+
+function renderEquipmentHistory() {
+  const tb = document.getElementById('equipment-history-tbody');
+  if (!tb) return;
+
+  if (!equipmentHistory.length) {
+    tb.innerHTML = `<tr><td colspan="7"><div class="empty"><i class="fa-solid fa-clock-rotate-left"></i>Aucun historique d'équipement</div></td></tr>`;
+    return;
+  }
+
+  const sorted = [...equipmentHistory].sort((a, b) => new Date(b.eventDate) - new Date(a.eventDate));
+
+  tb.innerHTML = sorted.map(ev => `<tr>
+    <td>${new Date(ev.eventDate).toLocaleString('fr-FR')}</td>
+    <td><span class="badge ${ev.eventType === 'creation' ? 'status-ok' : ev.eventType === 'suppression' ? 'status-alert' : 'status-warn'}">${escapeHtml(ev.eventType)}</span></td>
+    <td>${escapeHtml(ev.equipmentName)}</td>
+    <td>${escapeHtml(ev.serialNumber||'—')}</td>
+    <td>${formatEquipmentEventDetails(ev)}</td>
+    <td>${escapeHtml(ev.actor||'—')}</td>
+    <td>${escapeHtml(ev.notes||'—')}</td>
+  </tr>`).join('');
+}
+
+function formatEquipmentEventDetails(ev) {
+  const details = [];
+  if (ev.oldStatus && ev.newStatus) {
+    details.push(`${ev.oldStatus} → ${ev.newStatus}`);
+  }
+  if (ev.oldAssignedTo !== undefined && ev.newAssignedTo !== undefined) {
+    const old = ev.oldAssignedTo || 'Personne';
+    const new_ = ev.newAssignedTo || 'Personne';
+    details.push(`Affectation: ${old} → ${new_}`);
+  }
+  if (ev.oldAssignedOffice !== undefined && ev.newAssignedOffice !== undefined) {
+    const old = ev.oldAssignedOffice || 'Aucun';
+    const new_ = ev.newAssignedOffice || 'Aucun';
+    details.push(`Bureau: ${old} → ${new_}`);
+  }
+  if (ev.eventType === 'creation') {
+    details.push('Création de l\\'équipement');
+  }
+  if (ev.eventType === 'suppression') {
+    details.push('Suppression de l\\'équipement');
+  }
+  return details.length ? details.join(', ') : '—';
+}
+
+let editingEquipmentId = null;
+
+function openAddEquipmentModal() {
+  editingEquipmentId = null;
+  document.getElementById('equipment-modal-title').innerHTML = '<i class="fa-solid fa-laptop" style="margin-right:8px;"></i>Nouvel équipement';
+  document.getElementById('eq-id').value = '';
+  document.getElementById('eq-name').value = '';
+  document.getElementById('eq-serial').value = '';
+  document.getElementById('eq-cat').value = 'Outillage';
+  document.getElementById('eq-st').value = 'disponible';
+  document.getElementById('eq-assigned').value = '';
+  document.getElementById('eq-office').value = '';
+  document.getElementById('eq-purchase').value = '';
+  document.getElementById('eq-notes').value = '';
+  document.getElementById('equipment-modal').classList.add('show');
+  document.getElementById('eq-name').focus();
+}
+
+function editEquipment(id) {
+  const eq = equipments.find(e => e.id === id);
+  if (!eq) {
+    toast('Équipement introuvable.');
+    return;
+  }
+
+  editingEquipmentId = id;
+  document.getElementById('equipment-modal-title').innerHTML = '<i class="fa-solid fa-laptop" style="margin-right:8px;"></i>Modifier l\\'équipement';
+  document.getElementById('eq-id').value = eq.id;
+  document.getElementById('eq-name').value = eq.name || '';
+  document.getElementById('eq-serial').value = eq.serial || '';
+  document.getElementById('eq-cat').value = eq.category || 'Autre';
+  document.getElementById('eq-st').value = eq.status || 'disponible';
+  document.getElementById('eq-assigned').value = eq.assigned || '';
+  document.getElementById('eq-office').value = eq.office || '';
+  document.getElementById('eq-purchase').value = eq.purchaseDate || '';
+  document.getElementById('eq-notes').value = eq.notes || '';
+  document.getElementById('equipment-modal').classList.add('show');
+  document.getElementById('eq-name').focus();
+}
+
+function closeEquipmentModal() {
+  document.getElementById('equipment-modal').classList.remove('show');
+  editingEquipmentId = null;
+}
+
+async function saveEquipment() {
+  const name = document.getElementById('eq-name')?.value.trim() || '';
+  const serial = document.getElementById('eq-serial')?.value.trim() || '';
+  const category = document.getElementById('eq-cat')?.value || 'Autre';
+  const status = document.getElementById('eq-st')?.value || 'disponible';
+  const assigned = document.getElementById('eq-assigned')?.value.trim() || '';
+  const office = document.getElementById('eq-office')?.value.trim() || '';
+  const purchaseDate = document.getElementById('eq-purchase')?.value || '';
+  const notes = document.getElementById('eq-notes')?.value.trim() || '';
+
+  if (!name) {
+    toast('Le nom de l\\'équipement est obligatoire.');
+    document.getElementById('eq-name').focus();
+    return;
+  }
+
+  if (!serial) {
+    toast('Le numéro de série est obligatoire.');
+    document.getElementById('eq-serial').focus();
+    return;
+  }
+
+  try {
+    const payload = { name, serialNumber: serial, category, status, assignedTo: assigned, assignedOffice: office, purchaseDate, notes };
+
+    if (editingEquipmentId !== null) {
+      payload.id = editingEquipmentId;
+      const data = await apiRequest('equipment.php', { method: 'PATCH', body: JSON.stringify(payload) });
+      equipments = data.history?.equipments || equipments;
+      equipmentHistory = data.history || equipmentHistory;
+      toast('Équipement modifié avec succès.');
+    } else {
+      const data = await apiRequest('equipment.php', { method: 'POST', body: JSON.stringify(payload) });
+      if (data.item) equipments.push(data.item);
+      equipmentHistory = data.history || equipmentHistory;
+      toast('Équipement créé avec succès.');
+    }
+
+    closeEquipmentModal();
+    renderEquipment();
+    renderEquipmentHistory();
+  } catch (error) {
+    console.error(error);
+    toast(error.message || 'Opération impossible.');
+  }
+}
+
+async function deleteEquipment(id) {
+  const eq = equipments.find(e => e.id === id);
+  if (!eq) {
+    toast('Équipement introuvable.');
+    return;
+  }
+
+  if (!confirm(`Êtes-vous sûr de vouloir supprimer l'équipement "${eq.name}" ?`)) {
+    return;
+  }
+
+  try {
+    await apiRequest(`equipment.php?id=${id}`, { method: 'DELETE' });
+    equipments = equipments.filter(e => e.id !== id);
+    renderEquipment();
+    renderEquipmentHistory();
+    toast('Équipement supprimé avec succès.');
+  } catch (error) {
+    console.error(error);
+    toast(error.message || 'Suppression impossible.');
+  }
 }
 
 /* ── Commandes ── */
@@ -3197,6 +3359,7 @@ function renderAll() {
   renderMovements();
   renderHistory();
   renderEquipment();
+  renderEquipmentHistory();
   renderSuppliers();
   renderOrders();
   renderQuoteBuilder();
