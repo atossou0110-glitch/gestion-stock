@@ -455,9 +455,9 @@ function fetch_equipment_history(PDO $pdo, ?int $equipmentId = null): array
                     notes, actor_id, actor_name, actor_role,
                     DATE_FORMAT(event_date, '%d/%m/%Y') AS event_date_fr,
                     DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS created_at_fr
-             FROM equipment_history
+             FROM equipment_history h
              WHERE equipment_id = :equipment_id
-             ORDER BY event_date DESC, id DESC
+             ORDER BY h.event_date DESC, h.id DESC
              LIMIT 200"
         );
         $stmt->execute([':equipment_id' => $equipmentId]);
@@ -468,8 +468,8 @@ function fetch_equipment_history(PDO $pdo, ?int $equipmentId = null): array
                     notes, actor_id, actor_name, actor_role,
                     DATE_FORMAT(event_date, '%d/%m/%Y') AS event_date_fr,
                     DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS created_at_fr
-             FROM equipment_history
-             ORDER BY event_date DESC, id DESC
+             FROM equipment_history h
+             ORDER BY h.event_date DESC, h.id DESC
              LIMIT 500"
         );
     }
@@ -841,8 +841,8 @@ function fetch_stock_history(PDO $pdo): array
                 source_type, source_id, destination, requester, actor_id, actor_name, actor_role, notes,
                 DATE_FORMAT(event_date, '%d/%m/%Y') AS date_fr,
                 DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS created_fr
-         FROM stock_history
-         ORDER BY event_date DESC, id DESC
+         FROM stock_history h
+         ORDER BY h.event_date DESC, h.id DESC
          LIMIT 500"
     );
 
