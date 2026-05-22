@@ -1,0 +1,12 @@
+.git
+.gitignore
+deploy.bat
+deploy_exclude.txt
+*.bak
+*.lock
+backup/
+node_modules/
+__pycache__/
+.env
+.env.local
+auth_cookie.txt
