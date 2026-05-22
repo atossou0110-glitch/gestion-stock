@@ -822,6 +822,50 @@ function ensure_equipment_table(PDO $pdo): void
     $done = true;
 }
 
+function ensure_equipment_history_table(PDO $pdo): void
+{
+    static $done = false;
+
+    if ($done) {
+        return;
+    }
+
+    // La table est déjà créée dans ensure_equipment_table
+    // Cette fonction existe pour compatibilité avec les appels
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS equipment_history (
+          id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+          event_type VARCHAR(40) NOT NULL,
+          equipment_id INT UNSIGNED NOT NULL,
+          equipment_name VARCHAR(150) NOT NULL,
+          serial_number VARCHAR(100) NOT NULL,
+          old_status VARCHAR(40) NULL,
+          new_status VARCHAR(40) NULL,
+          old_assigned_to VARCHAR(120) NULL,
+          new_assigned_to VARCHAR(120) NULL,
+          old_assigned_office VARCHAR(120) NULL,
+          new_assigned_office VARCHAR(120) NULL,
+          actor_id INT UNSIGNED NULL,
+          actor_name VARCHAR(120) NULL,
+          actor_role VARCHAR(40) NULL,
+          notes TEXT NULL,
+          event_date DATE NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          INDEX idx_equipment_history_event_type (event_type),
+          INDEX idx_equipment_history_equipment_id (equipment_id),
+          INDEX idx_equipment_history_event_date (event_date),
+          CONSTRAINT fk_equipment_history_equipment
+            FOREIGN KEY (equipment_id)
+            REFERENCES equipment(id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    $done = true;
+}
+
 function equipment_to_app(array $row): array
 {
     return [

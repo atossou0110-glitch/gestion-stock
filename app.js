@@ -51,6 +51,7 @@ let movements = [];
 let stockHistory = [];
 let suppliers = [];
 let equipments = [];
+let equipmentHistory = [];
 let currentUser = null;
 let editingItemId = null;
 let editingSupplierId = null;
@@ -137,6 +138,8 @@ async function loadData() {
   movements = data.movements || [];
   stockHistory = data.history || [];
   suppliers = data.suppliers || [];
+  equipments = data.equipments || [];
+  equipmentHistory = data.equipmentHistory || [];
   params = data.params || params;
   nextId = items.reduce((max, item) => Math.max(max, Number(item.id) || 0), 0) + 1;
   syncParamsForm();
