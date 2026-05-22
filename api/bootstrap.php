@@ -13,14 +13,17 @@ try {
     $movements = [];
     $history = [];
     $suppliers = [];
+    $equipment = [];
 
     if ($role === 'admin') {
         $orders = fetch_orders($pdo);
         $movements = fetch_movements($pdo);
         $history = fetch_stock_history($pdo);
         $suppliers = fetch_suppliers($pdo);
+        $equipment = fetch_equipment($pdo);
     } elseif ($role === 'moderateur_stock') {
         $movements = fetch_movements($pdo);
+        $equipment = fetch_equipment($pdo);
     }
 
     json_response([
@@ -31,6 +34,7 @@ try {
         'movements' => $movements,
         'history' => $history,
         'suppliers' => $suppliers,
+        'equipment' => $equipment,
         'params' => fetch_settings($pdo),
     ]);
 } catch (Throwable $e) {
