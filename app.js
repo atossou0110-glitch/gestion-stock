@@ -50,6 +50,7 @@ let orders = [];
 let movements = [];
 let stockHistory = [];
 let suppliers = [];
+let equipments = [];
 let currentUser = null;
 let editingItemId = null;
 let editingSupplierId = null;
@@ -954,6 +955,46 @@ function renderSuppliers() {
       <div style="display:flex;gap:4px;">
         <button class="btn btn-sm btn-icon" title="Modifier" onclick="editSupplier(${s.id})"><i class="fa-solid fa-pen-to-square"></i></button>
         <button class="btn btn-sm btn-icon btn-danger" title="Supprimer" onclick="deleteSupplier(${s.id})"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+/* ── Équipements ── */
+function renderEquipment() {
+  const tb = document.getElementById('equipment-tbody');
+  if (!tb) return;
+
+  const search = (document.getElementById('eq-search')?.value || '').toLowerCase();
+  const statusFilter = document.getElementById('eq-status')?.value || 'all';
+  const categoryFilter = document.getElementById('eq-category')?.value || 'all';
+
+  let filtered = equipments.filter(eq => {
+    const matchSearch = !search || eq.name.toLowerCase().includes(search) || (eq.serial||'').toLowerCase().includes(search);
+    const matchStatus = statusFilter === 'all' || eq.status === statusFilter;
+    const matchCategory = categoryFilter === 'all' || eq.category === categoryFilter;
+    return matchSearch && matchStatus && matchCategory;
+  });
+
+  const count = document.getElementById('equipment-count');
+  if (count) count.textContent = `${filtered.length} équipement(s)`;
+
+  if (!filtered.length) {
+    tb.innerHTML = `<tr><td colspan="8"><div class="empty"><i class="fa-solid fa-laptop"></i>Aucun équipement trouvé</div></td></tr>`;
+    return;
+  }
+
+  tb.innerHTML = filtered.map(eq => `<tr>
+    <td class="td-name" data-label="Nom">${escapeHtml(eq.name)}</td>
+    <td data-label="N° Série">${escapeHtml(eq.serial||'—')}</td>
+    <td data-label="Catégorie">${escapeHtml(eq.category||'—')}</td>
+    <td data-label="État"><span class="badge ${eq.status === 'en service' ? 'status-ok' : eq.status === 'en panne' ? 'status-alert' : 'status-warn'}">${escapeHtml(eq.status)}</span></td>
+    <td data-label="Affecté à">${escapeHtml(eq.assigned||'—')}</td>
+    <td data-label="Bureau">${escapeHtml(eq.office||'—')}</td>
+    <td data-label="Actions">
+      <div style="display:flex;gap:4px;">
+        <button class="btn btn-sm btn-icon" title="Modifier" onclick="editEquipment(${eq.id})"><i class="fa-solid fa-pen-to-square"></i></button>
+        <button class="btn btn-sm btn-icon btn-danger" title="Supprimer" onclick="deleteEquipment(${eq.id})"><i class="fa-solid fa-trash"></i></button>
       </div>
     </td>
   </tr>`).join('');
